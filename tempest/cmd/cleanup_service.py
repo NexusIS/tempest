@@ -142,7 +142,7 @@ class SnapshotService(BaseService):
 
     def list(self):
         client = self.client
-        snaps = client.list_snapshots()
+        __, snaps = client.list_snapshots()
         LOG.debug("List count, %s Snapshots" % len(snaps))
         return snaps
 
@@ -218,7 +218,7 @@ class StackService(BaseService):
 
     def list(self):
         client = self.client
-        stacks = client.list_stacks()
+        _, stacks = client.list_stacks()
         LOG.debug("List count, %s Stacks" % len(stacks))
         return stacks
 
@@ -323,7 +323,7 @@ class VolumeService(BaseService):
 
     def list(self):
         client = self.client
-        vols = client.list_volumes()
+        _, vols = client.list_volumes()
         LOG.debug("List count, %s Volumes" % len(vols))
         return vols
 
@@ -845,7 +845,7 @@ class ImageService(BaseService):
 
     def list(self):
         client = self.client
-        images = client.list_images({"all_tenants": True})
+        _, images = client.list_images({"all_tenants": True})
         if not self.is_save_state:
             images = [image for image in images if image['id']
                       not in self.saved_state_json['images'].keys()]
@@ -886,7 +886,7 @@ class UserService(IdentityService):
 
     def list(self):
         client = self.client
-        users = client.get_users()
+        _, users = client.get_users()
 
         if not self.is_save_state:
             users = [user for user in users if user['id']
@@ -929,7 +929,7 @@ class RoleService(IdentityService):
     def list(self):
         client = self.client
         try:
-            roles = client.list_roles()
+            _, roles = client.list_roles()
             # reconcile roles with saved state and never list admin role
             if not self.is_save_state:
                 roles = [role for role in roles if
@@ -967,7 +967,7 @@ class TenantService(IdentityService):
 
     def list(self):
         client = self.client
-        tenants = client.list_tenants()
+        _, tenants = client.list_tenants()
         if not self.is_save_state:
             tenants = [tenant for tenant in tenants if (tenant['id']
                        not in self.saved_state_json['tenants'].keys()
@@ -1009,7 +1009,7 @@ class DomainService(BaseService):
 
     def list(self):
         client = self.client
-        domains = client.list_domains()
+        _, domains = client.list_domains()
         if not self.is_save_state:
             domains = [domain for domain in domains if domain['id']
                        not in self.saved_state_json['domains'].keys()]

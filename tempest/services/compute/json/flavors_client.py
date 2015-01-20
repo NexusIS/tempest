@@ -21,10 +21,17 @@ from tempest.api_schema.response.compute import flavors_access as schema_access
 from tempest.api_schema.response.compute import flavors_extra_specs \
     as schema_extra_specs
 from tempest.api_schema.response.compute.v2 import flavors as v2schema
-from tempest.services.compute.json import base
+from tempest.common import rest_client
+from tempest import config
+
+CONF = config.CONF
 
 
-class FlavorsClientJSON(base.ComputeClient):
+class FlavorsClientJSON(rest_client.RestClient):
+
+    def __init__(self, auth_provider):
+        super(FlavorsClientJSON, self).__init__(auth_provider)
+        self.service = CONF.compute.catalog_type
 
     def list_flavors(self, params=None):
         url = 'flavors'

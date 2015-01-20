@@ -16,10 +16,17 @@
 import json
 
 from tempest.api_schema.response.compute.v2 import fixed_ips as schema
-from tempest.services.compute.json import base
+from tempest.common import rest_client
+from tempest import config
+
+CONF = config.CONF
 
 
-class FixedIPsClientJSON(base.ComputeClient):
+class FixedIPsClientJSON(rest_client.RestClient):
+
+    def __init__(self, auth_provider):
+        super(FixedIPsClientJSON, self).__init__(auth_provider)
+        self.service = CONF.compute.catalog_type
 
     def get_fixed_ip_details(self, fixed_ip):
         url = "os-fixed-ips/%s" % (fixed_ip)

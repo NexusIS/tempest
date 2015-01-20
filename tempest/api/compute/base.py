@@ -271,7 +271,7 @@ class BaseComputeTest(tempest.test.BaseTestCase):
     def _delete_volume(volumes_client, volume_id):
         """Deletes the given volume and waits for it to be gone."""
         try:
-            volumes_client.delete_volume(volume_id)
+            resp, _ = volumes_client.delete_volume(volume_id)
             # TODO(mriedem): We should move the wait_for_resource_deletion
             # into the delete_volume method as a convenience to the caller.
             volumes_client.wait_for_resource_deletion(volume_id)
@@ -293,20 +293,20 @@ class BaseComputeTest(tempest.test.BaseTestCase):
         if 'name' in kwargs:
             name = kwargs.pop('name')
 
-        image = cls.images_client.create_image(server_id, name)
-        image_id = data_utils.parse_image_id(image.response['location'])
+        resp, image = cls.images_client.create_image(server_id, name)
+        image_id = data_utils.parse_image_id(resp['location'])
         cls.images.append(image_id)
 
         if 'wait_until' in kwargs:
             cls.images_client.wait_for_image_status(image_id,
                                                     kwargs['wait_until'])
-            image = cls.images_client.get_image(image_id)
+            resp, image = cls.images_client.get_image(image_id)
 
             if kwargs['wait_until'] == 'ACTIVE':
                 if kwargs.get('wait_for_server', True):
                     cls.servers_client.wait_for_server_status(server_id,
                                                               'ACTIVE')
-        return image
+        return resp, image
 
     @classmethod
     def rebuild_server(cls, server_id, **kwargs):

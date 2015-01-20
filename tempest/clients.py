@@ -14,7 +14,7 @@
 #    under the License.
 
 from tempest import auth
-from tempest.common import negative_rest_client
+from tempest.common import rest_client
 from tempest import config
 from tempest import manager
 from tempest.openstack.common import log as logging
@@ -83,8 +83,12 @@ from tempest.services.messaging.json.messaging_client import \
     MessagingClientJSON
 from tempest.services.network.json.network_client import NetworkClientJSON
 from tempest.services.object_storage.account_client import AccountClient
+from tempest.services.object_storage.account_client import \
+    AccountClientCustomizedHeader
 from tempest.services.object_storage.container_client import ContainerClient
 from tempest.services.object_storage.object_client import ObjectClient
+from tempest.services.object_storage.object_client import \
+    ObjectClientCustomizedHeader
 from tempest.services.orchestration.json.orchestration_client import \
     OrchestrationClient
 from tempest.services.telemetry.json.telemetry_client import \
@@ -133,22 +137,15 @@ class Manager(manager.Manager):
     Top level manager for OpenStack tempest clients
     """
 
-    default_params = {
-        'disable_ssl_certificate_validation':
-            CONF.identity.disable_ssl_certificate_validation,
-        'ca_certs': CONF.identity.ca_certificates_file,
-        'trace_requests': CONF.debug.trace_requests
-    }
-
     def __init__(self, credentials=None, interface='json', service=None):
         # Set interface and client type first
         self.interface = interface
         # super cares for credentials validation
         super(Manager, self).__init__(credentials=credentials)
 
-        self._set_compute_clients()
-        self._set_identity_clients()
-        self._set_volume_clients()
+        self._set_compute_clients(self.interface)
+        self._set_identity_clients(self.interface)
+        self._set_volume_clients(self.interface)
 
         self.baremetal_client = BaremetalClientJSON(self.auth_provider)
         self.network_client = NetworkClientJSON(self.auth_provider)
@@ -160,8 +157,9 @@ class Manager(manager.Manager):
         if CONF.service_available.ceilometer:
             self.telemetry_client = TelemetryClientJSON(
                 self.auth_provider)
-        self.negative_client = negative_rest_client.NegativeRestClient(
-            self.auth_provider, service)
+        self.negative_client = rest_client.NegativeRestClient(
+            self.auth_provider)
+        self.negative_client.service = service
 
         # TODO(andreaf) EC2 client still do their auth, v2 only
         ec2_client_args = (self.credentials.username,
@@ -177,25 +175,27 @@ class Manager(manager.Manager):
         self.container_client = ContainerClient(self.auth_provider)
         self.object_client = ObjectClient(self.auth_provider)
         self.orchestration_client = OrchestrationClient(
-            self.auth_provider,
-            CONF.orchestration.catalog_type,
-            CONF.orchestration.region or CONF.identity.region,
-            endpoint_type=CONF.orchestration.endpoint_type,
-            build_interval=CONF.orchestration.build_interval,
-            build_timeout=CONF.orchestration.build_timeout,
-            **self.default_params)
-
+            self.auth_provider)
         self.ec2api_client = botoclients.APIClientEC2(*ec2_client_args)
         self.s3_client = botoclients.ObjectClientS3(*ec2_client_args)
+        self.custom_object_client = ObjectClientCustomizedHeader(
+            self.auth_provider)
+        self.custom_account_client = \
+            AccountClientCustomizedHeader(self.auth_provider)
         self.data_processing_client = DataProcessingClient(
             self.auth_provider)
 
-    def _set_compute_clients(self):
+    def _set_compute_clients(self, type):
+        self._set_compute_json_clients()
+
+        # Common compute clients
         self.agents_client = AgentsClientJSON(self.auth_provider)
         self.networks_client = NetworksClientJSON(self.auth_provider)
         self.migrations_client = MigrationsClientJSON(self.auth_provider)
         self.security_group_default_rules_client = (
             SecurityGroupDefaultRulesClientJSON(self.auth_provider))
+
+    def _set_compute_json_clients(self):
         self.certificates_client = CertificatesClientJSON(self.auth_provider)
         self.servers_client = ServersClientJSON(self.auth_provider)
         self.limits_client = LimitsClientJSON(self.auth_provider)
@@ -222,7 +222,10 @@ class Manager(manager.Manager):
         self.instance_usages_audit_log_client = \
             InstanceUsagesAuditLogClientJSON(self.auth_provider)
 
-    def _set_identity_clients(self):
+    def _set_identity_clients(self, type):
+        self._set_identity_json_clients()
+
+    def _set_identity_json_clients(self):
         self.identity_client = IdentityClientJSON(self.auth_provider)
         self.identity_v3_client = IdentityV3ClientJSON(self.auth_provider)
         self.endpoints_client = EndPointClientJSON(self.auth_provider)
@@ -234,12 +237,20 @@ class Manager(manager.Manager):
             self.token_v3_client = V3TokenClientJSON()
         self.credentials_client = CredentialsClientJSON(self.auth_provider)
 
-    def _set_volume_clients(self):
+    def _set_volume_clients(self, type):
+        self._set_volume_json_clients()
+        # Common volume clients
+        # NOTE : As XML clients are not implemented for Qos-specs.
+        # So, setting the qos_client here. Once client are implemented,
+        # qos_client would be moved to its respective if/else.
+        # Bug : 1312553
         self.volume_qos_client = QosSpecsClientJSON(self.auth_provider)
         self.volume_qos_v2_client = QosSpecsV2ClientJSON(
             self.auth_provider)
         self.volume_services_v2_client = VolumesServicesV2ClientJSON(
             self.auth_provider)
+
+    def _set_volume_json_clients(self):
         self.backups_client = BackupsClientJSON(self.auth_provider)
         self.backups_v2_client = BackupsClientV2JSON(self.auth_provider)
         self.snapshots_client = SnapshotsClientJSON(self.auth_provider)
@@ -276,5 +287,20 @@ class AdminManager(Manager):
     def __init__(self, interface='json', service=None):
         super(AdminManager, self).__init__(
             credentials=auth.get_default_credentials('identity_admin'),
+            interface=interface,
+            service=service)
+
+
+class ComputeAdminManager(Manager):
+
+    """
+    Manager object that uses the compute_admin credentials for its
+    managed client objects
+    """
+
+    def __init__(self, interface='json', service=None):
+        base = super(ComputeAdminManager, self)
+        base.__init__(
+            credentials=auth.get_default_credentials('compute_admin'),
             interface=interface,
             service=service)

@@ -40,8 +40,8 @@ class VolumesBackupsV2Test(base.BaseVolumeAdminTest):
         # Create backup
         backup_name = data_utils.rand_name('Backup')
         create_backup = self.backups_adm_client.create_backup
-        backup = create_backup(self.volume['id'],
-                               name=backup_name)
+        _, backup = create_backup(self.volume['id'],
+                                  name=backup_name)
         self.addCleanup(self.backups_adm_client.delete_backup,
                         backup['id'])
         self.assertEqual(backup_name, backup['name'])
@@ -51,16 +51,16 @@ class VolumesBackupsV2Test(base.BaseVolumeAdminTest):
                                                        'available')
 
         # Get a given backup
-        backup = self.backups_adm_client.get_backup(backup['id'])
+        _, backup = self.backups_adm_client.get_backup(backup['id'])
         self.assertEqual(backup_name, backup['name'])
 
         # Get all backups with detail
-        backups = self.backups_adm_client.list_backups_with_detail()
+        _, backups = self.backups_adm_client.list_backups_with_detail()
         self.assertIn((backup['name'], backup['id']),
                       [(m['name'], m['id']) for m in backups])
 
         # Restore backup
-        restore = self.backups_adm_client.restore_backup(backup['id'])
+        _, restore = self.backups_adm_client.restore_backup(backup['id'])
 
         # Delete backup
         self.addCleanup(self.admin_volume_client.delete_volume,

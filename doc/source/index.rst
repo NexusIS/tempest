@@ -37,7 +37,6 @@ Command Documentation
    :maxdepth: 1
 
    cleanup
-   javelin
 
 ==================
 Indices and tables

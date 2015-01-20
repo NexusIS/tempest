@@ -14,20 +14,16 @@
 
 import json
 
-from tempest.common import service_client
+from tempest.common import rest_client
 from tempest import config
 
 CONF = config.CONF
 
 
-class DataProcessingClient(service_client.ServiceClient):
-
+class DataProcessingClient(rest_client.RestClient):
     def __init__(self, auth_provider):
-        super(DataProcessingClient, self).__init__(
-            auth_provider,
-            CONF.data_processing.catalog_type,
-            CONF.identity.region,
-            endpoint_type=CONF.data_processing.endpoint_type)
+        super(DataProcessingClient, self).__init__(auth_provider)
+        self.service = CONF.data_processing.catalog_type
 
     def _request_and_check_resp(self, request_func, uri, resp_status):
         """Make a request using specified request_func and check response

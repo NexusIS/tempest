@@ -44,11 +44,11 @@ class VolumesV2SnapshotTestJSON(base.BaseVolumeTest):
         and validates result.
         """
         if with_detail:
-            fetched_snap_list = \
+            _, fetched_snap_list = \
                 self.snapshots_client.\
                 list_snapshots_with_detail(params=params)
         else:
-            fetched_snap_list = \
+            _, fetched_snap_list = \
                 self.snapshots_client.list_snapshots(params=params)
 
         # Validating params of fetched snapshots
@@ -70,14 +70,11 @@ class VolumesV2SnapshotTestJSON(base.BaseVolumeTest):
         self.addCleanup(self.servers_client.delete_server, server['id'])
         self.servers_client.wait_for_server_status(server['id'], 'ACTIVE')
         mountpoint = '/dev/%s' % CONF.compute.volume_device_name
-        _, body = self.servers_client.attach_volume(
-            server['id'], self.volume_origin['id'], mountpoint)
+        _, body = self.volumes_client.attach_volume(
+            self.volume_origin['id'], server['id'], mountpoint)
         self.volumes_client.wait_for_volume_status(self.volume_origin['id'],
                                                    'in-use')
-        self.addCleanup(self.volumes_client.wait_for_volume_status,
-                        self.volume_origin['id'], 'available')
-        self.addCleanup(self.servers_client.detach_volume, server['id'],
-                        self.volume_origin['id'])
+        self.addCleanup(self._detach, self.volume_origin['id'])
         # Snapshot a volume even if it's attached to an instance
         snapshot = self.create_snapshot(self.volume_origin['id'],
                                         force=True)
@@ -94,14 +91,14 @@ class VolumesV2SnapshotTestJSON(base.BaseVolumeTest):
         snapshot = self.create_snapshot(self.volume_origin['id'], **params)
 
         # Get the snap and check for some of its details
-        snap_get = self.snapshots_client.get_snapshot(snapshot['id'])
+        _, snap_get = self.snapshots_client.get_snapshot(snapshot['id'])
         self.assertEqual(self.volume_origin['id'],
                          snap_get['volume_id'],
                          "Referred volume origin mismatch")
 
         # Compare also with the output from the list action
         tracking_data = (snapshot['id'], snapshot[self.name_field])
-        snaps_list = self.snapshots_client.list_snapshots()
+        _, snaps_list = self.snapshots_client.list_snapshots()
         snaps_data = [(f['id'], f[self.name_field]) for f in snaps_list]
         self.assertIn(tracking_data, snaps_data)
 
@@ -110,13 +107,13 @@ class VolumesV2SnapshotTestJSON(base.BaseVolumeTest):
         new_desc = 'This is the new description of snapshot.'
         params = {self.name_field: new_s_name,
                   self.descrip_field: new_desc}
-        update_snapshot = \
+        _, update_snapshot = \
             self.snapshots_client.update_snapshot(snapshot['id'], **params)
         # Assert response body for update_snapshot method
         self.assertEqual(new_s_name, update_snapshot[self.name_field])
         self.assertEqual(new_desc, update_snapshot[self.descrip_field])
         # Assert response body for get_snapshot method
-        updated_snapshot = \
+        _, updated_snapshot = \
             self.snapshots_client.get_snapshot(snapshot['id'])
         self.assertEqual(new_s_name, updated_snapshot[self.name_field])
         self.assertEqual(new_desc, updated_snapshot[self.descrip_field])
@@ -172,7 +169,7 @@ class VolumesV2SnapshotTestJSON(base.BaseVolumeTest):
         # create a snap based volume and deletes it
         snapshot = self.create_snapshot(self.volume_origin['id'])
         # NOTE(gfidente): size is required also when passing snapshot_id
-        volume = self.volumes_client.create_volume(
+        _, volume = self.volumes_client.create_volume(
             size=1,
             snapshot_id=snapshot['id'])
         self.volumes_client.wait_for_volume_status(volume['id'], 'available')

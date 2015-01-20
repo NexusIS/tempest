@@ -30,17 +30,19 @@ class HostsAdminTestJSON(base.BaseV2ComputeAdminTest):
 
     @test.attr(type='gate')
     def test_list_hosts(self):
-        hosts = self.client.list_hosts()
+        resp, hosts = self.client.list_hosts()
+        self.assertEqual(200, resp.status)
         self.assertTrue(len(hosts) >= 2, str(hosts))
 
     @test.attr(type='gate')
     def test_list_hosts_with_zone(self):
         self.useFixture(fixtures.LockFixture('availability_zone'))
-        hosts = self.client.list_hosts()
+        resp, hosts = self.client.list_hosts()
         host = hosts[0]
         zone_name = host['zone']
         params = {'zone': zone_name}
-        hosts = self.client.list_hosts(params)
+        resp, hosts = self.client.list_hosts(params)
+        self.assertEqual(200, resp.status)
         self.assertTrue(len(hosts) >= 1)
         self.assertIn(host, hosts)
 
@@ -49,27 +51,31 @@ class HostsAdminTestJSON(base.BaseV2ComputeAdminTest):
         # If send the request with a blank zone, the request will be successful
         # and it will return all the hosts list
         params = {'zone': ''}
-        hosts = self.client.list_hosts(params)
+        resp, hosts = self.client.list_hosts(params)
         self.assertNotEqual(0, len(hosts))
+        self.assertEqual(200, resp.status)
 
     @test.attr(type='gate')
     def test_list_hosts_with_nonexistent_zone(self):
         # If send the request with a nonexistent zone, the request will be
         # successful and no hosts will be retured
         params = {'zone': 'xxx'}
-        hosts = self.client.list_hosts(params)
+        resp, hosts = self.client.list_hosts(params)
         self.assertEqual(0, len(hosts))
+        self.assertEqual(200, resp.status)
 
     @test.attr(type='gate')
     def test_show_host_detail(self):
-        hosts = self.client.list_hosts()
+        resp, hosts = self.client.list_hosts()
+        self.assertEqual(200, resp.status)
 
         hosts = [host for host in hosts if host['service'] == 'compute']
         self.assertTrue(len(hosts) >= 1)
 
         for host in hosts:
             hostname = host['host_name']
-            resources = self.client.show_host_detail(hostname)
+            resp, resources = self.client.show_host_detail(hostname)
+            self.assertEqual(200, resp.status)
             self.assertTrue(len(resources) >= 1)
             host_resource = resources[0]['resource']
             self.assertIsNotNone(host_resource)

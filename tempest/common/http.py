@@ -1,4 +1,6 @@
-# Copyright 2014 NEC Corporation.  All rights reserved.
+# Copyright 2013 OpenStack Foundation
+# Copyright 2013 Citrix Systems, Inc.
+# All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -12,21 +14,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from tempest.common import service_client
-from tempest import config
-
-CONF = config.CONF
+import httplib2
 
 
-class ObjectStorageClient(service_client.ServiceClient):
-    """
-    Base object storage client class
-    """
-
-    def __init__(self, auth_provider):
-        super(ObjectStorageClient, self).__init__(
-            auth_provider,
-            CONF.object_storage.catalog_type,
-            CONF.object_storage.region or CONF.identity.region,
-            endpoint_type=CONF.object_storage.endpoint_type)
-        self.format = 'json'
+class ClosingHttp(httplib2.Http):
+    def request(self, *args, **kwargs):
+        original_headers = kwargs.get('headers', {})
+        new_headers = dict(original_headers, connection='close')
+        new_kwargs = dict(kwargs, headers=new_headers)
+        return super(ClosingHttp, self).request(*args, **new_kwargs)

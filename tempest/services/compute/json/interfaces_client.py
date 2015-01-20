@@ -19,11 +19,18 @@ import time
 from tempest.api_schema.response.compute import interfaces as common_schema
 from tempest.api_schema.response.compute import servers as servers_schema
 from tempest.api_schema.response.compute.v2 import interfaces as schema
+from tempest.common import rest_client
+from tempest import config
 from tempest import exceptions
-from tempest.services.compute.json import base
+
+CONF = config.CONF
 
 
-class InterfacesClientJSON(base.ComputeClient):
+class InterfacesClientJSON(rest_client.RestClient):
+
+    def __init__(self, auth_provider):
+        super(InterfacesClientJSON, self).__init__(auth_provider)
+        self.service = CONF.compute.catalog_type
 
     def list_interfaces(self, server):
         resp, body = self.get('servers/%s/os-interface' % server)

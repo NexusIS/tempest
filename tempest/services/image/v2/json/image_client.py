@@ -19,23 +19,18 @@ import urllib
 import jsonschema
 
 from tempest.common import glance_http
-from tempest.common import service_client
+from tempest.common import rest_client
 from tempest import config
 from tempest import exceptions
 
 CONF = config.CONF
 
 
-class ImageClientV2JSON(service_client.ServiceClient):
+class ImageClientV2JSON(rest_client.RestClient):
 
     def __init__(self, auth_provider):
-        super(ImageClientV2JSON, self).__init__(
-            auth_provider,
-            CONF.image.catalog_type,
-            CONF.image.region or CONF.identity.region,
-            endpoint_type=CONF.image.endpoint_type,
-            build_interval=CONF.image.build_interval,
-            build_timeout=CONF.image.build_timeout)
+        super(ImageClientV2JSON, self).__init__(auth_provider)
+        self.service = CONF.image.catalog_type
         self._http = None
 
     def _get_http(self):
@@ -47,7 +42,7 @@ class ImageClientV2JSON(service_client.ServiceClient):
 
     def _validate_schema(self, body, type='image'):
         if type in ['image', 'images']:
-            schema = self.get_schema(type)
+            resp, schema = self.get_schema(type)
         else:
             raise ValueError("%s is not a valid schema type" % type)
 
@@ -68,7 +63,7 @@ class ImageClientV2JSON(service_client.ServiceClient):
                                    "-json-patch"}
         resp, body = self.patch('v2/images/%s' % image_id, data, headers)
         self.expected_success(200, resp.status)
-        return service_client.ResponseBody(resp, self._parse_resp(body))
+        return resp, self._parse_resp(body)
 
     def create_image(self, name, container_format, disk_format, **kwargs):
         params = {
@@ -90,13 +85,12 @@ class ImageClientV2JSON(service_client.ServiceClient):
         resp, body = self.post('v2/images', data)
         self.expected_success(201, resp.status)
         body = json.loads(body)
-        return service_client.ResponseBody(resp, body)
+        return resp, body
 
     def delete_image(self, image_id):
         url = 'v2/images/%s' % image_id
         resp, _ = self.delete(url)
         self.expected_success(204, resp.status)
-        return service_client.ResponseBody(resp)
 
     def image_list(self, params=None):
         url = 'v2/images'
@@ -108,14 +102,14 @@ class ImageClientV2JSON(service_client.ServiceClient):
         self.expected_success(200, resp.status)
         body = json.loads(body)
         self._validate_schema(body, type='images')
-        return service_client.ResponseBodyList(resp, body['images'])
+        return resp, body['images']
 
     def get_image(self, image_id):
         url = 'v2/images/%s' % image_id
         resp, body = self.get(url)
         self.expected_success(200, resp.status)
         body = json.loads(body)
-        return service_client.ResponseBody(resp, body)
+        return resp, body
 
     def is_resource_deleted(self, id):
         try:
@@ -135,33 +129,32 @@ class ImageClientV2JSON(service_client.ServiceClient):
         resp, body = self.http.raw_request('PUT', url, headers=headers,
                                            body=data)
         self.expected_success(204, resp.status)
-        return service_client.ResponseBody(resp, body)
+        return resp, body
 
     def get_image_file(self, image_id):
         url = 'v2/images/%s/file' % image_id
         resp, body = self.get(url)
         self.expected_success(200, resp.status)
-        # We can't return a ResponseBody because the body is a string
         return resp, body
 
     def add_image_tag(self, image_id, tag):
         url = 'v2/images/%s/tags/%s' % (image_id, tag)
         resp, body = self.put(url, body=None)
         self.expected_success(204, resp.status)
-        return service_client.ResponseBody(resp, body)
+        return resp, body
 
     def delete_image_tag(self, image_id, tag):
         url = 'v2/images/%s/tags/%s' % (image_id, tag)
         resp, _ = self.delete(url)
         self.expected_success(204, resp.status)
-        return service_client.ResponseBody(resp)
+        return resp
 
     def get_image_membership(self, image_id):
         url = 'v2/images/%s/members' % image_id
         resp, body = self.get(url)
         self.expected_success(200, resp.status)
         body = json.loads(body)
-        return service_client.ResponseBody(resp, body)
+        return resp, body
 
     def add_member(self, image_id, member_id):
         url = 'v2/images/%s/members' % image_id
@@ -169,7 +162,7 @@ class ImageClientV2JSON(service_client.ServiceClient):
         resp, body = self.post(url, data)
         self.expected_success(200, resp.status)
         body = json.loads(body)
-        return service_client.ResponseBody(resp, body)
+        return resp, body
 
     def update_member_status(self, image_id, member_id, status):
         """Valid status are: ``pending``, ``accepted``,  ``rejected``."""
@@ -178,23 +171,23 @@ class ImageClientV2JSON(service_client.ServiceClient):
         resp, body = self.put(url, data)
         self.expected_success(200, resp.status)
         body = json.loads(body)
-        return service_client.ResponseBody(resp, body)
+        return resp, body
 
     def get_member(self, image_id, member_id):
         url = 'v2/images/%s/members/%s' % (image_id, member_id)
         resp, body = self.get(url)
         self.expected_success(200, resp.status)
-        return service_client.ResponseBody(resp, json.loads(body))
+        return resp, json.loads(body)
 
     def remove_member(self, image_id, member_id):
         url = 'v2/images/%s/members/%s' % (image_id, member_id)
         resp, _ = self.delete(url)
         self.expected_success(204, resp.status)
-        return service_client.ResponseBody(resp)
+        return resp
 
     def get_schema(self, schema):
         url = 'v2/schemas/%s' % schema
         resp, body = self.get(url)
         self.expected_success(200, resp.status)
         body = json.loads(body)
-        return service_client.ResponseBody(resp, body)
+        return resp, body

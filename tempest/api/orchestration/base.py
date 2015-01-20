@@ -68,13 +68,13 @@ class BaseOrchestrationTest(tempest.test.BaseTestCase):
                      environment=None, files=None):
         if parameters is None:
             parameters = {}
-        body = cls.client.create_stack(
+        resp, body = cls.client.create_stack(
             stack_name,
             template=template_data,
             parameters=parameters,
             environment=environment,
             files=files)
-        stack_id = body.response['location'].split('/')[-1]
+        stack_id = resp['location'].split('/')[-1]
         stack_identifier = '%s/%s' % (stack_name, stack_id)
         cls.stacks.append(stack_identifier)
         return stack_identifier
@@ -113,9 +113,9 @@ class BaseOrchestrationTest(tempest.test.BaseTestCase):
     def _create_image(cls, name_start='image-heat-', container_format='bare',
                       disk_format='iso'):
         image_name = data_utils.rand_name(name_start)
-        body = cls.images_v2_client.create_image(image_name,
-                                                 container_format,
-                                                 disk_format)
+        _, body = cls.images_v2_client.create_image(image_name,
+                                                    container_format,
+                                                    disk_format)
         image_id = body['id']
         cls.images.append(image_id)
         return body
@@ -164,7 +164,7 @@ class BaseOrchestrationTest(tempest.test.BaseTestCase):
 
     def list_resources(self, stack_identifier):
         """Get a dict mapping of resource names to types."""
-        resources = self.client.list_resources(stack_identifier)
+        _, resources = self.client.list_resources(stack_identifier)
         self.assertIsInstance(resources, list)
         for res in resources:
             self.assert_fields_in_dict(res, 'logical_resource_id',
@@ -175,5 +175,5 @@ class BaseOrchestrationTest(tempest.test.BaseTestCase):
                     for r in resources)
 
     def get_stack_output(self, stack_identifier, output_key):
-        body = self.client.get_stack(stack_identifier)
+        _, body = self.client.get_stack(stack_identifier)
         return self.stack_output(body, output_key)

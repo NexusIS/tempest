@@ -16,10 +16,18 @@
 import json
 
 from tempest.api_schema.response.compute.v2 import availability_zone as schema
-from tempest.services.compute.json import base
+from tempest.common import rest_client
+from tempest import config
+
+CONF = config.CONF
 
 
-class AvailabilityZoneClientJSON(base.ComputeClient):
+class AvailabilityZoneClientJSON(rest_client.RestClient):
+
+    def __init__(self, auth_provider):
+        super(AvailabilityZoneClientJSON, self).__init__(
+            auth_provider)
+        self.service = CONF.compute.catalog_type
 
     def get_availability_zone_list(self):
         resp, body = self.get('os-availability-zone')

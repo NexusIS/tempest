@@ -15,17 +15,24 @@
 
 import json
 
-from tempest.common import service_client
-from tempest.services.volume.json import base
+from tempest.common import rest_client
+from tempest import config
+
+CONF = config.CONF
 
 
-class BaseVolumeAvailabilityZoneClientJSON(base.VolumeClient):
+class BaseVolumeAvailabilityZoneClientJSON(rest_client.RestClient):
+
+    def __init__(self, auth_provider):
+        super(BaseVolumeAvailabilityZoneClientJSON, self).__init__(
+            auth_provider)
+        self.service = CONF.volume.catalog_type
 
     def get_availability_zone_list(self):
         resp, body = self.get('os-availability-zone')
         body = json.loads(body)
         self.expected_success(200, resp.status)
-        return service_client.ResponseBody(resp, body['availabilityZoneInfo'])
+        return resp, body['availabilityZoneInfo']
 
 
 class VolumeAvailabilityZoneClientJSON(BaseVolumeAvailabilityZoneClientJSON):

@@ -41,15 +41,15 @@ class VolumesV2MetadataTest(base.BaseVolumeTest):
                     "key3": "value3",
                     "key4": "<value&special_chars>"}
 
-        body = self.volumes_client.create_volume_metadata(self.volume_id,
-                                                          metadata)
+        _, body = self.volumes_client.create_volume_metadata(self.volume_id,
+                                                             metadata)
         # Get the metadata of the volume
-        body = self.volumes_client.get_volume_metadata(self.volume_id)
+        _, body = self.volumes_client.get_volume_metadata(self.volume_id)
         self.assertThat(body.items(), matchers.ContainsAll(metadata.items()))
         # Delete one item metadata of the volume
         self.volumes_client.delete_volume_metadata_item(
             self.volume_id, "key1")
-        body = self.volumes_client.get_volume_metadata(self.volume_id)
+        _, body = self.volumes_client.get_volume_metadata(self.volume_id)
         self.assertNotIn("key1", body)
         del metadata["key1"]
         self.assertThat(body.items(), matchers.ContainsAll(metadata.items()))
@@ -65,16 +65,16 @@ class VolumesV2MetadataTest(base.BaseVolumeTest):
                   "key1": "value1_update"}
 
         # Create metadata for the volume
-        body = self.volumes_client.create_volume_metadata(
+        _, body = self.volumes_client.create_volume_metadata(
             self.volume_id, metadata)
         # Get the metadata of the volume
-        body = self.volumes_client.get_volume_metadata(self.volume_id)
+        _, body = self.volumes_client.get_volume_metadata(self.volume_id)
         self.assertThat(body.items(), matchers.ContainsAll(metadata.items()))
         # Update metadata
-        body = self.volumes_client.update_volume_metadata(
+        _, body = self.volumes_client.update_volume_metadata(
             self.volume_id, update)
         # Get the metadata of the volume
-        body = self.volumes_client.get_volume_metadata(self.volume_id)
+        _, body = self.volumes_client.get_volume_metadata(self.volume_id)
         self.assertThat(body.items(), matchers.ContainsAll(update.items()))
 
     @test.attr(type='gate')
@@ -88,14 +88,14 @@ class VolumesV2MetadataTest(base.BaseVolumeTest):
                   "key2": "value2",
                   "key3": "value3_update"}
         # Create metadata for the volume
-        body = self.volumes_client.create_volume_metadata(
+        _, body = self.volumes_client.create_volume_metadata(
             self.volume_id, metadata)
         self.assertThat(body.items(), matchers.ContainsAll(metadata.items()))
         # Update metadata item
-        body = self.volumes_client.update_volume_metadata_item(
+        _, body = self.volumes_client.update_volume_metadata_item(
             self.volume_id, "key3", update_item)
         # Get the metadata of the volume
-        body = self.volumes_client.get_volume_metadata(self.volume_id)
+        _, body = self.volumes_client.get_volume_metadata(self.volume_id)
         self.assertThat(body.items(), matchers.ContainsAll(expect.items()))
 
 

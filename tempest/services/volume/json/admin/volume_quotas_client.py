@@ -16,17 +16,26 @@
 
 import urllib
 
-from tempest.common import service_client
+from tempest.common import rest_client
+from tempest import config
 from tempest.openstack.common import jsonutils
-from tempest.services.volume.json import base
+
+CONF = config.CONF
 
 
-class BaseVolumeQuotasClientJSON(base.VolumeClient):
+class BaseVolumeQuotasClientJSON(rest_client.RestClient):
     """
     Client class to send CRUD Volume Quotas API requests to a Cinder endpoint
     """
 
     TYPE = "json"
+
+    def __init__(self, auth_provider):
+        super(BaseVolumeQuotasClientJSON, self).__init__(auth_provider)
+
+        self.service = CONF.volume.catalog_type
+        self.build_interval = CONF.volume.build_interval
+        self.build_timeout = CONF.volume.build_timeout
 
     def get_default_quota_set(self, tenant_id):
         """List the default volume quota set for a tenant."""
@@ -34,7 +43,7 @@ class BaseVolumeQuotasClientJSON(base.VolumeClient):
         url = 'os-quota-sets/%s/defaults' % tenant_id
         resp, body = self.get(url)
         self.expected_success(200, resp.status)
-        return service_client.ResponseBody(resp, self._parse_resp(body))
+        return resp, self._parse_resp(body)
 
     def get_quota_set(self, tenant_id, params=None):
         """List the quota set for a tenant."""
@@ -45,13 +54,14 @@ class BaseVolumeQuotasClientJSON(base.VolumeClient):
 
         resp, body = self.get(url)
         self.expected_success(200, resp.status)
-        return service_client.ResponseBody(resp, self._parse_resp(body))
+        return resp, self._parse_resp(body)
 
     def get_quota_usage(self, tenant_id):
         """List the quota set for a tenant."""
 
-        body = self.get_quota_set(tenant_id, params={'usage': True})
-        return body
+        resp, body = self.get_quota_set(tenant_id, params={'usage': True})
+        self.expected_success(200, resp.status)
+        return resp, body
 
     def update_quota_set(self, tenant_id, gigabytes=None, volumes=None,
                          snapshots=None):
@@ -69,13 +79,12 @@ class BaseVolumeQuotasClientJSON(base.VolumeClient):
         post_body = jsonutils.dumps({'quota_set': post_body})
         resp, body = self.put('os-quota-sets/%s' % tenant_id, post_body)
         self.expected_success(200, resp.status)
-        return service_client.ResponseBody(resp, self._parse_resp(body))
+        return resp, self._parse_resp(body)
 
     def delete_quota_set(self, tenant_id):
         """Delete the tenant's quota set."""
         resp, body = self.delete('os-quota-sets/%s' % tenant_id)
         self.expected_success(200, resp.status)
-        return service_client.ResponseBody(resp, body)
 
 
 class VolumeQuotasClientJSON(BaseVolumeQuotasClientJSON):

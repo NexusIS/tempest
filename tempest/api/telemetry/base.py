@@ -69,11 +69,11 @@ class BaseTelemetryTest(tempest.test.BaseTestCase):
 
     @classmethod
     def create_image(cls, client):
-        body = client.create_image(
+        resp, body = client.create_image(
             data_utils.rand_name('image'), container_format='bare',
             disk_format='raw', visibility='private')
         cls.image_ids.append(body['id'])
-        return body
+        return resp, body
 
     @staticmethod
     def cleanup_resources(method, list_of_ids):

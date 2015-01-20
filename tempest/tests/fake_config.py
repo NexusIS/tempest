@@ -52,6 +52,9 @@ class ConfigFixture(conf_fixture.Config):
                 self.conf.set_default(prefix + config_option,
                                       'fake_' + config_option,
                                       group='identity')
+            # Compute Admin group items
+            self.conf.set_default(config_option, 'fake_' + config_option,
+                                  group='compute-admin')
 
 
 class FakePrivate(config.TempestConfigPrivate):

@@ -17,10 +17,17 @@ import json
 
 from tempest.api_schema.response.compute import certificates as schema
 from tempest.api_schema.response.compute.v2 import certificates as v2schema
-from tempest.services.compute.json import base
+from tempest.common import rest_client
+from tempest import config
+
+CONF = config.CONF
 
 
-class CertificatesClientJSON(base.ComputeClient):
+class CertificatesClientJSON(rest_client.RestClient):
+
+    def __init__(self, auth_provider):
+        super(CertificatesClientJSON, self).__init__(auth_provider)
+        self.service = CONF.compute.catalog_type
 
     def get_certificate(self, id):
         url = "os-certificates/%s" % (id)

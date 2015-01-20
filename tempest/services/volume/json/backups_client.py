@@ -16,15 +16,23 @@
 import json
 import time
 
-from tempest.common import service_client
+from tempest.common import rest_client
+from tempest import config
 from tempest import exceptions
-from tempest.services.volume.json import base
+
+CONF = config.CONF
 
 
-class BaseBackupsClientJSON(base.VolumeClient):
+class BaseBackupsClientJSON(rest_client.RestClient):
     """
     Client class to send CRUD Volume backup API requests to a Cinder endpoint
     """
+
+    def __init__(self, auth_provider):
+        super(BaseBackupsClientJSON, self).__init__(auth_provider)
+        self.service = CONF.volume.catalog_type
+        self.build_interval = CONF.volume.build_interval
+        self.build_timeout = CONF.volume.build_timeout
 
     def create_backup(self, volume_id, container=None, name=None,
                       description=None):
@@ -40,7 +48,7 @@ class BaseBackupsClientJSON(base.VolumeClient):
         resp, body = self.post('backups', post_body)
         body = json.loads(body)
         self.expected_success(202, resp.status)
-        return service_client.ResponseBody(resp, body['backup'])
+        return resp, body['backup']
 
     def restore_backup(self, backup_id, volume_id=None):
         """Restore volume from backup."""
@@ -49,13 +57,13 @@ class BaseBackupsClientJSON(base.VolumeClient):
         resp, body = self.post('backups/%s/restore' % (backup_id), post_body)
         body = json.loads(body)
         self.expected_success(202, resp.status)
-        return service_client.ResponseBody(resp, body['restore'])
+        return resp, body['restore']
 
     def delete_backup(self, backup_id):
         """Delete a backup of volume."""
         resp, body = self.delete('backups/%s' % (str(backup_id)))
         self.expected_success(202, resp.status)
-        return service_client.ResponseBody(resp, body)
+        return resp, body
 
     def get_backup(self, backup_id):
         """Returns the details of a single backup."""
@@ -63,7 +71,7 @@ class BaseBackupsClientJSON(base.VolumeClient):
         resp, body = self.get(url)
         body = json.loads(body)
         self.expected_success(200, resp.status)
-        return service_client.ResponseBody(resp, body['backup'])
+        return resp, body['backup']
 
     def list_backups_with_detail(self):
         """Information for all the tenant's backups."""
@@ -71,17 +79,17 @@ class BaseBackupsClientJSON(base.VolumeClient):
         resp, body = self.get(url)
         body = json.loads(body)
         self.expected_success(200, resp.status)
-        return service_client.ResponseBodyList(resp, body['backups'])
+        return resp, body['backups']
 
     def wait_for_backup_status(self, backup_id, status):
         """Waits for a Backup to reach a given status."""
-        body = self.get_backup(backup_id)
+        resp, body = self.get_backup(backup_id)
         backup_status = body['status']
         start = int(time.time())
 
         while backup_status != status:
             time.sleep(self.build_interval)
-            body = self.get_backup(backup_id)
+            resp, body = self.get_backup(backup_id)
             backup_status = body['status']
             if backup_status == 'error':
                 raise exceptions.VolumeBackupException(backup_id=backup_id)

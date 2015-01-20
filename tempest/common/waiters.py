@@ -28,7 +28,11 @@ def wait_for_server_status(client, server_id, status, ready_wait=True,
     """Waits for a server to reach a given status."""
 
     def _get_task_state(body):
-        return body.get('OS-EXT-STS:task_state', None)
+        if client.service == CONF.compute.catalog_v3_type:
+            task_state = body.get("os-extended-status:task_state", None)
+        else:
+            task_state = body.get('OS-EXT-STS:task_state', None)
+        return task_state
 
     # NOTE(afazekas): UNKNOWN status possible on ERROR
     # or in a very early stage.
@@ -101,12 +105,12 @@ def wait_for_image_status(client, image_id, status):
     The client should have a get_image(image_id) method to get the image.
     The client should also have build_interval and build_timeout attributes.
     """
-    image = client.get_image(image_id)
+    resp, image = client.get_image(image_id)
     start = int(time.time())
 
     while image['status'] != status:
         time.sleep(client.build_interval)
-        image = client.get_image(image_id)
+        resp, image = client.get_image(image_id)
         status_curr = image['status']
         if status_curr == 'ERROR':
             raise exceptions.AddImageException(image_id=image_id)

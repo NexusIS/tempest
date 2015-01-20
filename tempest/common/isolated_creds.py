@@ -52,26 +52,26 @@ class IsolatedCreds(cred_provider.CredentialProvider):
         return os.identity_client, os.network_client
 
     def _create_tenant(self, name, description):
-        tenant = self.identity_admin_client.create_tenant(
+        _, tenant = self.identity_admin_client.create_tenant(
             name=name, description=description)
         return tenant
 
     def _get_tenant_by_name(self, name):
-        tenant = self.identity_admin_client.get_tenant_by_name(name)
+        _, tenant = self.identity_admin_client.get_tenant_by_name(name)
         return tenant
 
     def _create_user(self, username, password, tenant, email):
-        user = self.identity_admin_client.create_user(
+        _, user = self.identity_admin_client.create_user(
             username, password, tenant['id'], email)
         return user
 
     def _get_user(self, tenant, username):
-        user = self.identity_admin_client.get_user_by_username(
+        _, user = self.identity_admin_client.get_user_by_username(
             tenant['id'], username)
         return user
 
     def _list_roles(self):
-        roles = self.identity_admin_client.list_roles()
+        _, roles = self.identity_admin_client.list_roles()
         return roles
 
     def _assign_user_role(self, tenant, user, role_name):
@@ -124,8 +124,6 @@ class IsolatedCreds(cred_provider.CredentialProvider):
             self._assign_user_role(tenant, user, swift_operator_role)
         if admin:
             self._assign_user_role(tenant, user, CONF.identity.admin_role)
-        for role in CONF.auth.tempest_roles:
-            self._assign_user_role(tenant, user, role)
         return self._get_credentials(user, tenant)
 
     def _get_credentials(self, user, tenant):

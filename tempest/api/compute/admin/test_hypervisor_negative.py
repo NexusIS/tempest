@@ -35,7 +35,8 @@ class HypervisorAdminNegativeTestJSON(base.BaseV2ComputeAdminTest):
 
     def _list_hypervisors(self):
         # List of hypervisors
-        hypers = self.client.get_hypervisor_list()
+        resp, hypers = self.client.get_hypervisor_list()
+        self.assertEqual(200, resp.status)
         return hypers
 
     @test.attr(type=['negative', 'gate'])

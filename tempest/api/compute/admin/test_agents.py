@@ -37,7 +37,8 @@ class AgentsAdminTestJSON(base.BaseV2ComputeAdminTest):
             hypervisor='common', os='linux', architecture='x86_64',
             version='7.0', url='xxx://xxxx/xxx/xxx',
             md5hash='add6bb58e139be103324d04d82d8f545')
-        body = self.client.create_agent(**params)
+        resp, body = self.client.create_agent(**params)
+        self.assertEqual(200, resp.status)
         self.agent_id = body['agent_id']
 
     def tearDown(self):
@@ -66,7 +67,8 @@ class AgentsAdminTestJSON(base.BaseV2ComputeAdminTest):
             hypervisor='kvm', os='win', architecture='x86',
             version='7.0', url='xxx://xxxx/xxx/xxx',
             md5hash='add6bb58e139be103324d04d82d8f545')
-        body = self.client.create_agent(**params)
+        resp, body = self.client.create_agent(**params)
+        self.assertEqual(200, resp.status)
         self.addCleanup(self.client.delete_agent, body['agent_id'])
         for expected_item, value in params.items():
             self.assertEqual(value, body[expected_item])
@@ -77,23 +79,27 @@ class AgentsAdminTestJSON(base.BaseV2ComputeAdminTest):
         params = self._param_helper(
             version='8.0', url='xxx://xxxx/xxx/xxx2',
             md5hash='add6bb58e139be103324d04d82d8f547')
-        body = self.client.update_agent(self.agent_id, **params)
+        resp, body = self.client.update_agent(self.agent_id, **params)
+        self.assertEqual(200, resp.status)
         for expected_item, value in params.items():
             self.assertEqual(value, body[expected_item])
 
     @test.attr(type='gate')
     def test_delete_agent(self):
         # Delete an agent.
-        self.client.delete_agent(self.agent_id)
+        resp, _ = self.client.delete_agent(self.agent_id)
+        self.assertEqual(200, resp.status)
 
         # Verify the list doesn't contain the deleted agent.
-        agents = self.client.list_agents()
+        resp, agents = self.client.list_agents()
+        self.assertEqual(200, resp.status)
         self.assertNotIn(self.agent_id, map(lambda x: x['agent_id'], agents))
 
     @test.attr(type='gate')
     def test_list_agents(self):
         # List all agents.
-        agents = self.client.list_agents()
+        resp, agents = self.client.list_agents()
+        self.assertEqual(200, resp.status)
         self.assertTrue(len(agents) > 0, 'Cannot get any agents.(%s)' % agents)
         self.assertIn(self.agent_id, map(lambda x: x['agent_id'], agents))
 
@@ -104,12 +110,14 @@ class AgentsAdminTestJSON(base.BaseV2ComputeAdminTest):
             hypervisor='xen', os='linux', architecture='x86',
             version='7.0', url='xxx://xxxx/xxx/xxx1',
             md5hash='add6bb58e139be103324d04d82d8f546')
-        agent_xen = self.client.create_agent(**params)
+        resp, agent_xen = self.client.create_agent(**params)
+        self.assertEqual(200, resp.status)
         self.addCleanup(self.client.delete_agent, agent_xen['agent_id'])
 
         agent_id_xen = agent_xen['agent_id']
         params_filter = {'hypervisor': agent_xen['hypervisor']}
-        agents = self.client.list_agents(params_filter)
+        resp, agents = self.client.list_agents(params_filter)
+        self.assertEqual(200, resp.status)
         self.assertTrue(len(agents) > 0, 'Cannot get any agents.(%s)' % agents)
         self.assertIn(agent_id_xen, map(lambda x: x['agent_id'], agents))
         self.assertNotIn(self.agent_id, map(lambda x: x['agent_id'], agents))
