@@ -499,7 +499,6 @@ class Credentials(object):
     ATTRIBUTES = []
     TYPES = {
         'identity_admin': ('identity', 'admin'),
-        'compute_admin': ('compute_admin', None),
         'user': ('identity', None),
         'alt_user': ('identity', 'alt')
     }
@@ -561,7 +560,10 @@ class Credentials(object):
             raise exceptions.InvalidCredentials()
         creds = cls._get_default(credentials_type)
         if not creds.is_valid():
-            raise exceptions.InvalidConfiguration()
+            msg = ("The %s credentials are incorrectly set in the config file."
+                   " Double check that all required values are assigned" %
+                   credentials_type)
+            raise exceptions.InvalidConfiguration(msg)
         return creds
 
     @classmethod

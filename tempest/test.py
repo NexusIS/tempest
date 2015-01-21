@@ -194,7 +194,6 @@ def is_extension_enabled(extension_name, service):
     """
     config_dict = {
         'compute': CONF.compute_feature_enabled.api_extensions,
-        'compute_v3': CONF.compute_feature_enabled.api_v3_extensions,
         'volume': CONF.volume_feature_enabled.api_extensions,
         'network': CONF.network_feature_enabled.api_extensions,
         'object': CONF.object_storage_feature_enabled.discoverable_apis,
@@ -274,8 +273,8 @@ class BaseTestCase(testtools.testcase.WithAttributes,
             cls.resource_setup()
         except Exception:
             etype, value, trace = sys.exc_info()
-            LOG.info("%s in %s.setUpClass. Invoking tearDownClass." % (
-                cls.__name__, etype))
+            LOG.info("%s raised in %s.setUpClass. Invoking tearDownClass." % (
+                     etype, cls.__name__))
             cls.tearDownClass()
             try:
                 raise etype, value, trace
@@ -321,20 +320,6 @@ class BaseTestCase(testtools.testcase.WithAttributes,
                 del trace  # to avoid circular refs
 
     @classmethod
-    def resource_setup(cls):
-        """Class level resource setup for test cases.
-        """
-        pass
-
-    @classmethod
-    def resource_cleanup(cls):
-        """Class level resource cleanup for test cases.
-        Resource cleanup must be able to handle the case of partially setup
-        resources, in case a failure during `resource_setup` should happen.
-        """
-        pass
-
-    @classmethod
     def skip_checks(cls):
         """Class level skip checks. Subclasses verify in here all
         conditions that might prevent the execution of the entire test class.
@@ -360,6 +345,20 @@ class BaseTestCase(testtools.testcase.WithAttributes,
         # TODO(andreaf) There is a fair amount of code that could me moved from
         # base / test classes in here. Ideally tests should be able to only
         # specify which client is `client` and nothing else.
+        pass
+
+    @classmethod
+    def resource_setup(cls):
+        """Class level resource setup for test cases.
+        """
+        pass
+
+    @classmethod
+    def resource_cleanup(cls):
+        """Class level resource cleanup for test cases.
+        Resource cleanup must be able to handle the case of partially setup
+        resources, in case a failure during `resource_setup` should happen.
+        """
         pass
 
     def setUp(self):

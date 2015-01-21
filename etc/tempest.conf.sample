@@ -248,14 +248,13 @@
 # Time in seconds between build status checks. (integer value)
 #build_interval = 1
 
-# Timeout in seconds to wait for an instance to build. (integer value)
+# Timeout in seconds to wait for an instance to build. Other services
+# that do not define build_timeout will inherit this value, for
+# example the image service. (integer value)
 #build_timeout = 300
 
 # Catalog type of the Compute service. (string value)
 #catalog_type = compute
-
-# Catalog type of the Compute v3 service. (string value)
-#catalog_v3_type = computev3
 
 # The endpoint type to use for the compute service. (string value)
 #endpoint_type = publicURL
@@ -361,27 +360,6 @@
 #volume_device_name = vdb
 
 
-[compute-admin]
-
-#
-# From tempest.config
-#
-
-# Domain name for authentication as admin (Keystone V3).The same
-# domain applies to user and project (string value)
-#domain_name = <None>
-
-# API key to use when authenticating as admin. (string value)
-#password = <None>
-
-# Administrative Tenant name to use for Nova API requests. (string
-# value)
-#tenant_name = <None>
-
-# Administrative Username to use for Nova API requests. (string value)
-#username = <None>
-
-
 [compute-feature-enabled]
 
 #
@@ -393,15 +371,6 @@
 # specified with alias name. Empty list indicates all extensions are
 # disabled (list value)
 #api_extensions = all
-
-# If false, skip all nova v3 tests. (boolean value)
-#api_v3 = false
-
-# A list of enabled v3 extensions with a special entry all which
-# indicates every extension is enabled. Each extension should be
-# specified with alias name. Empty list indicates all extensions are
-# disabled (list value)
-#api_v3_extensions = all
 
 # Does the test environment block migration support cinder iSCSI
 # volumes (boolean value)
@@ -748,7 +717,7 @@
 # Catalog type of the Neutron service. (string value)
 #catalog_type = network
 
-# List of dns servers whichs hould be used for subnet creation (list
+# List of dns servers which should be used for subnet creation (list
 # value)
 #dns_servers = 8.8.8.8,8.8.4.4
 

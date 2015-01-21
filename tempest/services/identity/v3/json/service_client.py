@@ -16,22 +16,14 @@
 import json
 
 from tempest.common import rest_client
-from tempest import config
-
-CONF = config.CONF
+from tempest.services.identity.v3.json import base
 
 
-class ServiceClientJSON(rest_client.RestClient):
-
-    def __init__(self, auth_provider):
-        super(ServiceClientJSON, self).__init__(auth_provider)
-        self.service = CONF.identity.catalog_type
-        self.endpoint_url = 'adminURL'
-        self.api_version = "v3"
+class ServiceClientJSON(base.IdentityV3Client):
 
     def update_service(self, service_id, **kwargs):
         """Updates a service."""
-        resp, body = self.get_service(service_id)
+        body = self.get_service(service_id)
         name = kwargs.get('name', body['name'])
         type = kwargs.get('type', body['type'])
         desc = kwargs.get('description', body['description'])
@@ -44,7 +36,7 @@ class ServiceClientJSON(rest_client.RestClient):
         resp, body = self.patch('services/%s' % service_id, patch_body)
         self.expected_success(200, resp.status)
         body = json.loads(body)
-        return resp, body['service']
+        return rest_client.ResponseBody(resp, body['service'])
 
     def get_service(self, service_id):
         """Get Service."""
@@ -52,7 +44,7 @@ class ServiceClientJSON(rest_client.RestClient):
         resp, body = self.get(url)
         self.expected_success(200, resp.status)
         body = json.loads(body)
-        return resp, body['service']
+        return rest_client.ResponseBody(resp, body['service'])
 
     def create_service(self, serv_type, name=None, description=None,
                        enabled=True):
@@ -66,16 +58,16 @@ class ServiceClientJSON(rest_client.RestClient):
         resp, body = self.post("services", body)
         self.expected_success(201, resp.status)
         body = json.loads(body)
-        return resp, body["service"]
+        return rest_client.ResponseBody(resp, body["service"])
 
     def delete_service(self, serv_id):
         url = "services/" + serv_id
         resp, body = self.delete(url)
         self.expected_success(204, resp.status)
-        return resp, body
+        return rest_client.ResponseBody(resp, body)
 
     def list_services(self):
         resp, body = self.get('services')
         self.expected_success(200, resp.status)
         body = json.loads(body)
-        return resp, body['services']
+        return rest_client.ResponseBodyList(resp, body['services'])
